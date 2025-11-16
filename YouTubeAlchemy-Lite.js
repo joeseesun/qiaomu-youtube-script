@@ -3,7 +3,7 @@
 // @description  Simplified YouTube enhancement: transcript export, playback speed control, and tab view layout. Stripped down from 200+ features to just the essentials.
 // @author       Simplified by Claude (Based on Tim Macy's YouTube Alchemy)
 // @license      AGPL-3.0-or-later
-// @version      1.1.0
+// @version      1.0.1
 // @namespace    YouTubeAlchemyLite
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @match        https://*.youtube.com/*
@@ -57,15 +57,15 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         buttonIcons: {
             settings: '⋮',
             lazyLoad: '📜',
-            download: '↓',
-            copy: '',
+            download: '⬇️',
+            copy: '📋',
             ChatGPT: '💬',
-            NotebookLM: '🎧'
+            NotebookLM: '📔'
         },
 
         // Playback Speed Control
         playbackSpeed: true,
-        playbackSpeedBtns: true,  // Changed: default to true, show common presets
+        playbackSpeedBtns: false,
         playbackSpeedValue: 1,
         playbackSpeedToggle: 's',
         playbackSpeedDecrease: 'a',
@@ -172,37 +172,31 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         .CentAnni-button-wrapper {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             margin-right: 8px;
         }
 
         .CentAnni-button-wrapper button {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 12px;
+            padding: 6px 10px;
             cursor: pointer;
             background-color: transparent;
             color: var(--yt-spec-text-primary, #f1f1f1);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 18px;
             font-family: "Roboto", "Arial", sans-serif;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 500;
-            transition: all .15s cubic-bezier(0.05, 0, 0, 1);
+            transition: all .2s ease-out;
             white-space: nowrap;
         }
 
         .CentAnni-button-wrapper button:hover {
             background-color: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
         }
 
         .CentAnni-button-wrapper button:active {
-            background-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(0);
+            background-color: rgba(255, 255, 255, 0.2);
         }
 
         #transcript-lazy-button {
@@ -229,53 +223,6 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         html:not([dark]) .CentAnni-button-wrapper button:hover {
             background-color: rgba(0, 0, 0, 0.05);
             border-color: rgba(0, 0, 0, 0.2);
-        }
-
-        /* ===== TOOLTIP SYSTEM ===== */
-        .CentAnni-tooltip {
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 6px 10px;
-            background-color: rgba(28, 28, 28, 0.95);
-            color: #fff;
-            font-size: 12px;
-            font-weight: 400;
-            line-height: 1.4;
-            white-space: nowrap;
-            border-radius: 4px;
-            pointer-events: none;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity .2s, visibility .2s;
-            z-index: 10000;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .CentAnni-tooltip::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 5px solid transparent;
-            border-top-color: rgba(28, 28, 28, 0.95);
-        }
-
-        button:hover .CentAnni-tooltip,
-        span:hover .CentAnni-tooltip {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        html:not([dark]) .CentAnni-tooltip {
-            background-color: rgba(240, 240, 240, 0.98);
-            color: #030303;
-        }
-
-        html:not([dark]) .CentAnni-tooltip::after {
-            border-top-color: rgba(240, 240, 240, 0.98);
         }
 
         .transcript-preload {
@@ -504,38 +451,6 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
 
     applyCSSClasses();
 
-    // ==================== HELPER FUNCTIONS ====================
-
-    function createTooltip(text) {
-        const tooltip = document.createElement('span');
-        tooltip.classList.add('CentAnni-tooltip');
-        tooltip.textContent = text;
-        return tooltip;
-    }
-
-    function createButton(config) {
-        const { id, text, tooltip, onClick, className = '' } = config;
-
-        const button = document.createElement('button');
-        if (id) button.id = id;
-        if (className) button.className = className;
-
-        // Use textContent - only CSP-safe method
-        if (text) {
-            button.textContent = text;
-        }
-
-        if (tooltip) {
-            button.appendChild(createTooltip(tooltip));
-        }
-
-        if (onClick) {
-            button.addEventListener('click', onClick);
-        }
-
-        return button;
-    }
-
     // ==================== UTILITY FUNCTIONS ====================
 
     function showNotification(message, duration = 2000) {
@@ -671,53 +586,48 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         buttonWrapper.id = 'transcript-button-container';
 
         // Download button
-        const downloadBtn = createButton({
-            id: 'transcript-download-button',
-            text: '↓',
-            tooltip: 'Download Transcript',
-            onClick: () => downloadTranscript()
-        });
+        const downloadBtn = document.createElement('button');
+        downloadBtn.id = 'transcript-download-button';
+        downloadBtn.textContent = USER_CONFIG.buttonIcons.download || '⬇️';
+        downloadBtn.title = 'Download Transcript';
+        downloadBtn.addEventListener('click', () => downloadTranscript());
         buttonWrapper.appendChild(downloadBtn);
 
         // Copy button
-        const copyBtn = createButton({
-            id: 'transcript-copy-button',
-            text: '📋',
-            tooltip: 'Copy to Clipboard',
-            onClick: () => copyTranscript()
-        });
+        const copyBtn = document.createElement('button');
+        copyBtn.id = 'transcript-copy-button';
+        copyBtn.textContent = USER_CONFIG.buttonIcons.copy || '📋';
+        copyBtn.title = 'Copy Transcript';
+        copyBtn.addEventListener('click', () => copyTranscript());
         buttonWrapper.appendChild(copyBtn);
 
         // ChatGPT button
         if (USER_CONFIG.targetChatGPTUrl) {
-            const chatGPTBtn = createButton({
-                id: 'transcript-ChatGPT-button',
-                text: '💬',
-                tooltip: `Send to ${USER_CONFIG.targetChatGPTLabel || 'ChatGPT'}`,
-                onClick: () => sendToChatGPT()
-            });
+            const chatGPTBtn = document.createElement('button');
+            chatGPTBtn.id = 'transcript-ChatGPT-button';
+            chatGPTBtn.textContent = USER_CONFIG.buttonIcons.ChatGPT || '💬';
+            chatGPTBtn.title = 'Send to ' + (USER_CONFIG.targetChatGPTLabel || 'ChatGPT');
+            chatGPTBtn.addEventListener('click', () => sendToChatGPT());
             buttonWrapper.appendChild(chatGPTBtn);
         }
 
         // NotebookLM button
         if (USER_CONFIG.targetNotebookLMUrl) {
-            const notebookBtn = createButton({
-                id: 'transcript-NotebookLM-button',
-                text: '🎧',
-                tooltip: `Send to ${USER_CONFIG.targetNotebookLMLabel || 'NotebookLM'}`,
-                onClick: () => sendToNotebookLM()
-            });
+            const notebookBtn = document.createElement('button');
+            notebookBtn.id = 'transcript-NotebookLM-button';
+            notebookBtn.textContent = USER_CONFIG.buttonIcons.NotebookLM || '📔';
+            notebookBtn.title = 'Send to ' + (USER_CONFIG.targetNotebookLMLabel || 'NotebookLM');
+            notebookBtn.addEventListener('click', () => sendToNotebookLM());
             buttonWrapper.appendChild(notebookBtn);
         }
 
         // Lazy load button (if enabled) - placed at the end
         if (USER_CONFIG.lazyTranscriptLoading) {
-            const lazyBtn = createButton({
-                id: 'transcript-lazy-button',
-                text: '📜',
-                tooltip: 'Load Transcript',
-                onClick: loadTranscript
-            });
+            const lazyBtn = document.createElement('button');
+            lazyBtn.id = 'transcript-lazy-button';
+            lazyBtn.textContent = USER_CONFIG.buttonIcons.lazyLoad || '📜';
+            lazyBtn.title = 'Load Transcript';
+            lazyBtn.addEventListener('click', loadTranscript);
             buttonWrapper.appendChild(lazyBtn);
         }
 
@@ -959,26 +869,20 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         controlDiv.id = 'CentAnni-playback-speed-control';
         controlDiv.classList.add('CentAnni-playback-control');
 
-        const minusBtn = createButton({
-            text: '−',
-            tooltip: 'Decrease speed (a)',
-            onClick: () => setSpeed(video.playbackRate - 0.25)
+        const minusBtn = document.createElement('button');
+        minusBtn.textContent = '-';
+        minusBtn.addEventListener('click', () => {
+            setSpeed(video.playbackRate - 0.25);
         });
 
         const speedDisplay = document.createElement('span');
         speedDisplay.id = 'CentAnni-speed-display';
         speedDisplay.textContent = `${video.playbackRate.toFixed(2)}x`;
 
-        // Add tooltip to speed display
-        const speedTooltip = createTooltip('s: Toggle 1x | a: - | d: +');
-        speedDisplay.style.position = 'relative';
-        speedDisplay.style.cursor = 'help';
-        speedDisplay.appendChild(speedTooltip);
-
-        const plusBtn = createButton({
-            text: '+',
-            tooltip: 'Increase speed (d)',
-            onClick: () => setSpeed(video.playbackRate + 0.25)
+        const plusBtn = document.createElement('button');
+        plusBtn.textContent = '+';
+        plusBtn.addEventListener('click', () => {
+            setSpeed(video.playbackRate + 0.25);
         });
 
         controlDiv.appendChild(minusBtn);
@@ -1070,8 +974,7 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
     }
 
     function createSpeedPresetButtons(video, setSpeed) {
-        // Only show most commonly used speeds (not all 16)
-        const speeds = [1, 1.25, 1.5, 2, 3];
+        const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4];
 
         const container = document.createElement('div');
         container.id = 'CentAnni-speed-buttons';
@@ -1134,9 +1037,7 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         // Create header
         const headerDiv = document.createElement('div');
         headerDiv.classList.add('CentAnni-tabView-header');
-        const h3 = document.createElement('h3');
-        h3.textContent = 'Video Sections';
-        headerDiv.appendChild(h3);
+        headerDiv.innerHTML = '<h3>Video Sections</h3>';
         tabViewDiv.appendChild(headerDiv);
 
         // Create subheader (tabs)
@@ -1204,7 +1105,7 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         tabViewDiv.insertBefore(subheaderDiv, tabViewDiv.children[1]);
 
         // Replace secondary with tab view
-        secondary.textContent = '';
+        secondary.innerHTML = '';
         secondary.appendChild(tabViewDiv);
 
         // Activate first tab
@@ -1306,5 +1207,5 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         }
     }
 
-    console.log('YouTube Alchemy Lite v1.1.0 loaded');
+    console.log('YouTube Alchemy Lite v1.0.1 loaded');
 })();
