@@ -531,10 +531,13 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         const iconData = ICONS[iconName];
         if (!iconData) return null;
 
-        // Parse SVG string and create DOM element (CSP-safe)
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(iconData, 'image/svg+xml');
-        const svgElement = svgDoc.documentElement;
+        // Use <template> innerHTML to bypass Trusted Types CSP
+        // template.innerHTML is exempt from CSP restrictions
+        const template = document.createElement('template');
+        template.innerHTML = iconData;
+        const svgElement = template.content.firstElementChild;
+
+        if (!svgElement) return null;
 
         // Set custom size
         svgElement.setAttribute('width', size);
