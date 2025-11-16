@@ -3,7 +3,7 @@
 // @description  Essential YouTube enhancements by 向阳乔木: transcript export, playback speed control, tab view layout, and comment export.
 // @author       向阳乔木 (https://x.com/vista8)
 // @license      AGPL-3.0-or-later
-// @version      1.3.0
+// @version      1.4.0
 // @namespace    QiaomuYouTubeScript
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @match        https://*.youtube.com/*
@@ -329,8 +329,33 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
             transform: translateY(0);
         }
 
+        .CentAnni-copy-transcript {
+            margin-left: 8px !important;
+            font-size: 14px !important;
+            padding: 5px 10px !important;
+            font-weight: 500 !important;
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            color: rgba(255, 255, 255, 0.65) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 4px !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            cursor: pointer !important;
+        }
+
+        .CentAnni-copy-transcript:hover {
+            background-color: rgba(59, 130, 246, 0.12) !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            border-color: rgba(59, 130, 246, 0.25) !important;
+            transform: translateY(-1px);
+        }
+
+        .CentAnni-copy-transcript:active {
+            background-color: rgba(59, 130, 246, 0.2) !important;
+            transform: translateY(0);
+        }
+
         .CentAnni-author-link {
-            margin-left: 10px !important;
+            margin-left: 8px !important;
             padding: 5px 10px !important;
             background-color: rgba(255, 255, 255, 0.04) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -956,6 +981,36 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
             setSpeed(2);
         });
 
+        // Copy transcript button
+        const copyTranscriptBtn = document.createElement('button');
+        copyTranscriptBtn.textContent = '📋';
+        copyTranscriptBtn.classList.add('CentAnni-copy-transcript');
+        copyTranscriptBtn.title = 'Copy transcript to clipboard';
+        copyTranscriptBtn.addEventListener('click', async () => {
+            try {
+                const transcriptText = getTranscriptText();
+                if (!transcriptText) {
+                    alert('Transcript not available. Please wait for it to load or enable transcript first.');
+                    return;
+                }
+
+                await navigator.clipboard.writeText(transcriptText);
+
+                // Visual feedback
+                const originalText = copyTranscriptBtn.textContent;
+                copyTranscriptBtn.textContent = '✓';
+                copyTranscriptBtn.style.color = 'rgba(59, 130, 246, 0.9)';
+
+                setTimeout(() => {
+                    copyTranscriptBtn.textContent = originalText;
+                    copyTranscriptBtn.style.color = '';
+                }, 1500);
+            } catch (error) {
+                console.error('Failed to copy transcript:', error);
+                alert('Failed to copy transcript: ' + error.message);
+            }
+        });
+
         // Author link button
         const authorBtn = document.createElement('a');
         authorBtn.textContent = '👤';
@@ -970,6 +1025,7 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         controlDiv.appendChild(plusBtn);
         controlDiv.appendChild(speed15Btn);
         controlDiv.appendChild(speed2Btn);
+        controlDiv.appendChild(copyTranscriptBtn);
         controlDiv.appendChild(authorBtn);
         menuRenderer.prepend(controlDiv);
 
@@ -1401,5 +1457,5 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         }
     }
 
-    console.log('Qiaomu\'s YouTube Script v1.3.0 loaded');
+    console.log('Qiaomu\'s YouTube Script v1.4.0 loaded');
 })();
