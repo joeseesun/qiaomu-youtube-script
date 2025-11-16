@@ -3,12 +3,14 @@
 // @description  Essential YouTube enhancements by 向阳乔木: transcript export, playback speed control, tab view layout, and comment export.
 // @author       向阳乔木 (https://x.com/vista8)
 // @license      AGPL-3.0-or-later
-// @version      1.5.0
+// @version      1.6.0
 // @namespace    QiaomuYouTubeScript
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @match        https://*.youtube.com/*
 // @grant        GM.setValue
 // @grant        GM.getValue
+// @grant        GM.xmlHttpRequest
+// @connect      youtube.com
 // @run-at       document-start
 // @noframes
 // @homepageURL  https://www.qiaomu.ai/
@@ -104,6 +106,8 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
 
         // Comment Export
         copyCommentsButton: true,
+        fetchAllComments: true,        // 使用 API 获取所有评论
+        maxCommentsToFetch: 1000,      // 最大获取评论数
 
         // Basic Styling
         compactLayout: false,
@@ -1361,6 +1365,198 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
 
     // ==================== COPY COMMENTS ====================
 
+    // Helper: Get ytInitialData from page
+    function getYtInitialData() {
+        try {
+            if (window.ytInitialData) {
+                return window.ytInitialData;
+            }
+
+            // Fallback: extract from script tags
+            const scripts = document.getElementsByTagName('script');
+            for (let script of scripts) {
+                const content = script.textContent;
+                if (content.includes('var ytInitialData')) {
+                    const match = content.match(/var ytInitialData = ({.*?});/s);
+                    if (match) {
+                        return JSON.parse(match[1]);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Failed to get ytInitialData:', e);
+        }
+        return null;
+    }
+
+    // Helper: Extract continuation token from ytInitialData
+    function getContinuationToken(data) {
+        try {
+            const contents = data?.contents?.twoColumnWatchNextResults?.results?.results?.contents;
+            if (!contents) return null;
+
+            for (let content of contents) {
+                if (content.itemSectionRenderer?.sectionIdentifier === 'comment-item-section') {
+                    const continuation = content.itemSectionRenderer.contents[0]?.continuationItemRenderer;
+                    return continuation?.continuationEndpoint?.continuationCommand?.token;
+                }
+            }
+        } catch (e) {
+            console.error('Failed to extract continuation token:', e);
+        }
+        return null;
+    }
+
+    // Helper: Parse comments from API response
+    function parseCommentsFromAPI(items) {
+        const comments = [];
+
+        for (let item of items) {
+            try {
+                if (item.commentThreadRenderer) {
+                    const thread = item.commentThreadRenderer;
+                    const comment = thread.comment.commentRenderer;
+
+                    // Main comment
+                    const commentData = {
+                        author: comment.authorText?.simpleText || '',
+                        authorChannel: comment.authorEndpoint?.browseEndpoint?.browseId || '',
+                        text: comment.contentText?.runs?.map(r => r.text).join('') || '',
+                        likeCount: comment.voteCount?.simpleText || '0',
+                        publishedTime: comment.publishedTimeText?.runs?.[0]?.text || '',
+                        replies: []
+                    };
+
+                    // Replies
+                    if (thread.replies?.commentRepliesRenderer) {
+                        const replies = thread.replies.commentRepliesRenderer.contents;
+                        for (let reply of replies) {
+                            if (reply.commentRenderer) {
+                                const r = reply.commentRenderer;
+                                commentData.replies.push({
+                                    author: r.authorText?.simpleText || '',
+                                    text: r.contentText?.runs?.map(run => run.text).join('') || '',
+                                    likeCount: r.voteCount?.simpleText || '0',
+                                    publishedTime: r.publishedTimeText?.runs?.[0]?.text || ''
+                                });
+                            }
+                        }
+                    }
+
+                    comments.push(commentData);
+                }
+            } catch (e) {
+                console.error('Failed to parse comment:', e);
+            }
+        }
+
+        return comments;
+    }
+
+    // Helper: Fetch comments using continuation token
+    function fetchCommentsViaAPI(continuationToken) {
+        return new Promise((resolve, reject) => {
+            const url = 'https://www.youtube.com/youtubei/v1/next?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8';
+
+            const payload = {
+                continuation: continuationToken,
+                context: {
+                    client: {
+                        clientName: 'WEB',
+                        clientVersion: '2.20251113.00.00'
+                    }
+                }
+            };
+
+            GM.xmlHttpRequest({
+                method: 'POST',
+                url: url,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(payload),
+                onload: function(response) {
+                    try {
+                        const data = JSON.parse(response.responseText);
+                        const items = data.onResponseReceivedEndpoints?.[0]?.reloadContinuationItemsCommand?.continuationItems ||
+                                    data.onResponseReceivedEndpoints?.[1]?.appendContinuationItemsAction?.continuationItems || [];
+
+                        const comments = parseCommentsFromAPI(items);
+
+                        // Find next token
+                        let nextToken = null;
+                        for (let item of items) {
+                            if (item.continuationItemRenderer) {
+                                nextToken = item.continuationItemRenderer.continuationEndpoint?.continuationCommand?.token;
+                                break;
+                            }
+                        }
+
+                        resolve({ comments, nextToken });
+                    } catch (e) {
+                        console.error('Failed to parse API response:', e);
+                        reject(e);
+                    }
+                },
+                onerror: function(e) {
+                    console.error('API request failed:', e);
+                    reject(e);
+                }
+            });
+        });
+    }
+
+    // Helper: Recursively fetch all comments
+    async function fetchAllComments(initialToken, maxComments, onProgress) {
+        let allComments = [];
+        let token = initialToken;
+
+        while (token && allComments.length < maxComments) {
+            try {
+                const { comments, nextToken } = await fetchCommentsViaAPI(token);
+                allComments = allComments.concat(comments);
+
+                if (onProgress) {
+                    onProgress(allComments.length);
+                }
+
+                token = nextToken;
+
+                // Delay to avoid rate limiting
+                if (token && allComments.length < maxComments) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+            } catch (e) {
+                console.error('Error fetching comments batch:', e);
+                break;
+            }
+        }
+
+        return allComments;
+    }
+
+    // Helper: Format comments as text
+    function formatCommentsAsText(comments) {
+        let text = '';
+        let count = 0;
+
+        comments.forEach(comment => {
+            count++;
+            text += `${count}. @${comment.author}:\n${comment.text}\n`;
+
+            // Add replies
+            comment.replies?.forEach(reply => {
+                count++;
+                text += `${count}. @${reply.author} (回复):\n${reply.text}\n`;
+            });
+
+            text += '\n';
+        });
+
+        return { text, count };
+    }
+
+    // Main function: Create copy comments button
     async function createCopyCommentsButton() {
         if (!USER_CONFIG.copyCommentsButton) return;
 
@@ -1400,8 +1596,8 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
             // Create copy button
             const copyBtn = document.createElement('button');
             copyBtn.id = 'copy-comments-button';
-            copyBtn.textContent = '📋 复制评论';
-            copyBtn.title = 'Copy all comments to clipboard';
+            copyBtn.textContent = USER_CONFIG.fetchAllComments ? '📋 复制所有评论' : '📋 复制评论';
+            copyBtn.title = USER_CONFIG.fetchAllComments ? 'Copy all comments via API' : 'Copy visible comments';
             copyBtn.style.cssText = `
                 margin-left: 12px;
                 padding: 6px 12px;
@@ -1424,67 +1620,132 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
                 copyBtn.style.background = 'transparent';
             });
 
+            let isProcessing = false;
+
             copyBtn.addEventListener('click', async () => {
+                if (isProcessing) return;
+
                 try {
-                    // Get all comment threads
-                    const commentThreads = commentsSection.querySelectorAll('ytd-comment-thread-renderer');
+                    isProcessing = true;
+                    const originalText = copyBtn.textContent;
 
-                    if (commentThreads.length === 0) {
-                        showToast('没有找到评论', 'error');
-                        return;
-                    }
+                    if (USER_CONFIG.fetchAllComments) {
+                        // Fetch all comments via API
+                        copyBtn.textContent = '⏳ 获取中...';
+                        copyBtn.disabled = true;
 
-                    let allComments = [];
-                    let commentCount = 0;
-
-                    // Extract comments
-                    commentThreads.forEach((thread, index) => {
-                        // Main comment
-                        const mainComment = thread.querySelector('#body #main #comment-content #content-text');
-                        const authorElement = thread.querySelector('#body #main #header-author h3 a');
-
-                        if (mainComment && authorElement) {
-                            const author = authorElement.textContent.trim();
-                            const text = mainComment.textContent.trim();
-                            commentCount++;
-                            allComments.push(`${commentCount}. @${author}:\n${text}\n`);
+                        const ytInitialData = getYtInitialData();
+                        if (!ytInitialData) {
+                            showToast('无法获取页面数据', 'error');
+                            copyBtn.textContent = originalText;
+                            copyBtn.disabled = false;
+                            isProcessing = false;
+                            return;
                         }
 
-                        // Replies (if any)
-                        const replies = thread.querySelectorAll('#replies ytd-comment-renderer');
-                        replies.forEach(reply => {
-                            const replyContent = reply.querySelector('#comment-content #content-text');
-                            const replyAuthor = reply.querySelector('#header-author h3 a');
+                        const token = getContinuationToken(ytInitialData);
+                        if (!token) {
+                            showToast('未找到评论数据', 'error');
+                            copyBtn.textContent = originalText;
+                            copyBtn.disabled = false;
+                            isProcessing = false;
+                            return;
+                        }
 
-                            if (replyContent && replyAuthor) {
-                                const author = replyAuthor.textContent.trim();
-                                const text = replyContent.textContent.trim();
-                                commentCount++;
-                                allComments.push(`${commentCount}. @${author} (回复):\n${text}\n`);
-                            }
+                        const maxComments = USER_CONFIG.maxCommentsToFetch || 1000;
+
+                        const allComments = await fetchAllComments(token, maxComments, (count) => {
+                            copyBtn.textContent = `⏳ 已获取 ${count} 条...`;
                         });
-                    });
 
-                    const commentsText = allComments.join('\n');
+                        if (allComments.length === 0) {
+                            showToast('没有找到评论', 'error');
+                            copyBtn.textContent = originalText;
+                            copyBtn.disabled = false;
+                            isProcessing = false;
+                            return;
+                        }
 
-                    // Copy to clipboard
-                    await navigator.clipboard.writeText(commentsText);
+                        const { text: commentsText, count: totalCount } = formatCommentsAsText(allComments);
 
-                    // Visual feedback
-                    const originalText = copyBtn.textContent;
-                    copyBtn.textContent = '✓ 已复制 ' + commentCount + ' 条评论';
-                    copyBtn.style.color = 'var(--yt-spec-call-to-action)';
+                        await navigator.clipboard.writeText(commentsText);
 
-                    setTimeout(() => {
-                        copyBtn.textContent = originalText;
-                        copyBtn.style.color = 'var(--yt-spec-text-secondary)';
-                    }, 2000);
+                        copyBtn.textContent = `✓ 已复制 ${totalCount} 条`;
+                        copyBtn.style.color = 'var(--yt-spec-call-to-action)';
 
-                    showToast(`已复制 ${commentCount} 条评论`, 'success', 2000);
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                            copyBtn.style.color = 'var(--yt-spec-text-secondary)';
+                            copyBtn.disabled = false;
+                            isProcessing = false;
+                        }, 2000);
+
+                        showToast(`已复制 ${totalCount} 条评论（${allComments.length} 主评论）`, 'success', 3000);
+
+                    } else {
+                        // Fallback: Copy visible comments from DOM
+                        const commentThreads = commentsSection.querySelectorAll('ytd-comment-thread-renderer');
+
+                        if (commentThreads.length === 0) {
+                            showToast('没有找到评论', 'error');
+                            isProcessing = false;
+                            return;
+                        }
+
+                        let allComments = [];
+                        let commentCount = 0;
+
+                        // Extract comments
+                        commentThreads.forEach((thread, index) => {
+                            // Main comment
+                            const mainComment = thread.querySelector('#body #main #comment-content #content-text');
+                            const authorElement = thread.querySelector('#body #main #header-author h3 a');
+
+                            if (mainComment && authorElement) {
+                                const author = authorElement.textContent.trim();
+                                const text = mainComment.textContent.trim();
+                                commentCount++;
+                                allComments.push(`${commentCount}. @${author}:\n${text}\n`);
+                            }
+
+                            // Replies (if any)
+                            const replies = thread.querySelectorAll('#replies ytd-comment-renderer');
+                            replies.forEach(reply => {
+                                const replyContent = reply.querySelector('#comment-content #content-text');
+                                const replyAuthor = reply.querySelector('#header-author h3 a');
+
+                                if (replyContent && replyAuthor) {
+                                    const author = replyAuthor.textContent.trim();
+                                    const text = replyContent.textContent.trim();
+                                    commentCount++;
+                                    allComments.push(`${commentCount}. @${author} (回复):\n${text}\n`);
+                                }
+                            });
+                        });
+
+                        const commentsText = allComments.join('\n');
+
+                        // Copy to clipboard
+                        await navigator.clipboard.writeText(commentsText);
+
+                        copyBtn.textContent = '✓ 已复制 ' + commentCount + ' 条评论';
+                        copyBtn.style.color = 'var(--yt-spec-call-to-action)';
+
+                        setTimeout(() => {
+                            copyBtn.textContent = originalText;
+                            copyBtn.style.color = 'var(--yt-spec-text-secondary)';
+                            isProcessing = false;
+                        }, 2000);
+
+                        showToast(`已复制 ${commentCount} 条可见评论`, 'success', 2000);
+                    }
 
                 } catch (error) {
                     console.error('Failed to copy comments:', error);
-                    showToast('复制失败', 'error');
+                    showToast('复制失败: ' + error.message, 'error');
+                    copyBtn.textContent = USER_CONFIG.fetchAllComments ? '📋 复制所有评论' : '📋 复制评论';
+                    copyBtn.disabled = false;
+                    isProcessing = false;
                 }
             });
 

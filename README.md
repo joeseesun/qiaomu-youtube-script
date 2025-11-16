@@ -6,7 +6,36 @@
 
 **作者：** [向阳乔木](https://www.qiaomu.ai/) | [Twitter @vista8](https://x.com/vista8)
 
-## 最新版本 v1.5.0 🎉
+## 最新版本 v1.6.0 🎉
+
+**复制所有评论 - 通过API全量获取**
+
+- 🚀 **API获取评论** - 使用YouTube内部API获取所有评论，不再受页面加载限制
+- 📊 **实时进度** - 按钮显示获取进度："⏳ 已获取 123 条..."
+- ⚙️ **可配置上限** - `maxCommentsToFetch` 默认1000条，可自定义
+- 🔄 **智能降级** - API模式关闭时自动降级为DOM模式（仅复制可见评论）
+- 💪 **包含回复** - 完整获取所有主评论和回复
+- 🎯 **准确计数** - 区分主评论数和总评论数（含回复）
+
+**使用方法：**
+1. 打开任意有评论的视频
+2. 点击"📋 复制所有评论"按钮
+3. 等待自动获取（实时显示进度）
+4. 完成后自动复制到剪贴板
+
+**配置项：**
+```javascript
+fetchAllComments: true,        // 启用API模式
+maxCommentsToFetch: 1000,      // 最大获取数量
+```
+
+**技术细节：**
+- 使用YouTube的continuation token机制
+- 每批请求间隔300ms避免限流
+- 自动解析评论和回复的完整数据
+- GM.xmlHttpRequest实现跨域请求
+
+### v1.5.0 更新
 
 **优雅Toast通知 - 告别全屏弹窗**
 
@@ -15,22 +44,6 @@
 - 🌈 **三色状态** - 成功(绿) / 错误(红) / 信息(蓝)
 - 🇨🇳 **简化文案** - "没有找到字幕"代替冗长英文提示
 - ⚡ **静默加载** - 转录自动加载无提示，不干扰观看
-
-**提示优化对比：**
-```
-旧版：[全屏遮罩] "Transcript not available. Please wait for it to load or enable transcript first."
-新版：[右下角] "没有找到字幕"
-
-旧版：[全屏遮罩] "Transcript copied! Opening ChatGPT..."
-新版：[右下角] "已复制并打开ChatGPT"
-```
-
-**Toast设计细节：**
-- 位置固定在右下角30px
-- 毛玻璃背景(backdrop-filter: blur)
-- 淡入+上浮动画(cubic-bezier)
-- 2.5秒自动消失
-- 不阻塞任何操作
 
 ### v1.4.0 更新
 
@@ -149,24 +162,32 @@ squareDesign: false
 **为什么保留：** 方便将评论内容导出用于AI分析、内容整理等场景。
 
 功能：
-- 📋 一键复制所有评论
+- 🚀 **API全量获取** - 使用YouTube内部API，无需手动加载即可获取所有评论
+- 📋 一键复制所有评论（最多1000条，可配置）
 - 👥 包含评论作者信息
 - 💬 包含所有回复
 - 🔢 自动编号
+- 📊 实时进度显示
 - ✓ 复制成功反馈
 
 配置项：
 ```javascript
 copyCommentsButton: true       // 显示复制评论按钮
+fetchAllComments: true         // 使用API获取所有评论（推荐）
+maxCommentsToFetch: 1000       // 最大获取评论数
 ```
 
 **使用方法：**
 1. 打开任意有评论的视频
-2. 在评论数量旁边会出现 "📋 复制评论" 按钮
-3. 点击按钮即可复制所有可见评论
-4. 格式：`序号. @用户名:\n评论内容\n\n`
+2. 在评论数量旁边会出现 "📋 复制所有评论" 按钮
+3. 点击按钮，脚本会自动通过API获取所有评论
+4. 实时显示进度："⏳ 已获取 123 条..."
+5. 完成后自动复制到剪贴板
+6. 格式：`序号. @用户名:\n评论内容\n\n`
 
-**注意：** 只能复制当前已加载的评论，如需复制更多评论，请先向下滚动加载。
+**两种模式：**
+- **API模式**（`fetchAllComments: true`）- 自动获取所有评论，无需滚动页面
+- **DOM模式**（`fetchAllComments: false`）- 只复制页面上已加载的评论
 
 ## 删除的功能（原版有，本脚本没有）
 
@@ -307,6 +328,11 @@ const DEFAULT_CONFIG = {
     videoTabView: true,                 // 关闭则不启用Tab视图
     autoTheaterMode: true,              // 视频页自动进Theater模式
     autoOpenChapters: true,             // 自动打开章节标签
+
+    // 评论导出
+    copyCommentsButton: true,           // 显示复制评论按钮
+    fetchAllComments: true,             // 使用API获取所有评论
+    maxCommentsToFetch: 1000,           // 最大获取评论数
 
     // 样式
     compactLayout: true,                // 紧凑布局
