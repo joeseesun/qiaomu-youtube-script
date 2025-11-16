@@ -3,7 +3,7 @@
 // @description  Simplified YouTube enhancement: transcript export, playback speed control, tab view layout, and comment export. Stripped down from 200+ features to just the essentials.
 // @author       向阳乔木 (https://x.com/vista8)
 // @license      AGPL-3.0-or-later
-// @version      1.2.0
+// @version      1.3.0
 // @namespace    YouTubeAlchemyLite
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @match        https://*.youtube.com/*
@@ -268,51 +268,87 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         .CentAnni-playback-control {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px;
+            gap: 6px;
+            padding: 10px 12px;
             background-color: rgba(28, 28, 28, .9);
-            border-radius: 4px;
+            border-radius: 6px;
         }
 
         .CentAnni-playback-control button {
-            padding: 4px 12px;
+            padding: 5px 13px;
             cursor: pointer;
             background-color: hsl(0, 0%, 15%);
-            color: white;
+            color: rgba(255, 255, 255, 0.95);
             border: 1px solid hsl(0, 0%, 30%);
-            border-radius: 3px;
+            border-radius: 4px;
             font-size: 14px;
-            transition: background-color .2s;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .CentAnni-playback-control button:hover {
-            background-color: hsl(0, 0%, 25%);
+            background-color: hsl(0, 0%, 22%);
+            border-color: hsl(0, 0%, 40%);
+            transform: translateY(-1px);
         }
 
         .CentAnni-playback-control button:active {
-            background-color: hsl(0, 0%, 35%);
+            background-color: hsl(0, 0%, 30%);
+            transform: translateY(0);
         }
 
         #CentAnni-speed-display {
-            min-width: 50px;
+            min-width: 55px;
             text-align: center;
-            color: white;
-            font-weight: 500;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 600;
+            letter-spacing: 0.02em;
         }
 
         .CentAnni-speed-preset {
+            margin-left: 6px !important;
             font-size: 13px !important;
-            padding: 4px 10px !important;
-            background-color: hsl(210, 100%, 40%) !important;
-            border-color: hsl(210, 100%, 50%) !important;
+            padding: 5px 11px !important;
+            font-weight: 500 !important;
+            background-color: rgba(255, 255, 255, 0.06) !important;
+            color: rgba(255, 255, 255, 0.75) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 4px !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
 
         .CentAnni-speed-preset:hover {
-            background-color: hsl(210, 100%, 50%) !important;
+            background-color: rgba(59, 130, 246, 0.15) !important;
+            color: rgba(255, 255, 255, 0.95) !important;
+            border-color: rgba(59, 130, 246, 0.3) !important;
+            transform: translateY(-1px);
+        }
+
+        .CentAnni-speed-preset:active {
+            background-color: rgba(59, 130, 246, 0.25) !important;
+            transform: translateY(0);
         }
 
         .CentAnni-author-link {
-            color: inherit !important;
+            margin-left: 10px !important;
+            padding: 5px 10px !important;
+            background-color: rgba(255, 255, 255, 0.04) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 4px !important;
+            color: rgba(255, 255, 255, 0.5) !important;
+            font-size: 15px !important;
+            text-decoration: none !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .CentAnni-author-link:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            transform: translateY(-1px);
         }
 
         #CentAnni-speed-buttons {
@@ -922,30 +958,12 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
 
         // Author link button
         const authorBtn = document.createElement('a');
-        authorBtn.textContent = '🌲';
+        authorBtn.textContent = '👤';
         authorBtn.href = 'https://x.com/vista8';
         authorBtn.target = '_blank';
         authorBtn.rel = 'noopener noreferrer';
         authorBtn.classList.add('CentAnni-author-link');
         authorBtn.title = 'Follow @vista8 on X';
-        authorBtn.style.cssText = `
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            margin-left: 8px;
-            padding: 4px 8px;
-            cursor: pointer;
-            font-size: 16px;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        `;
-        authorBtn.addEventListener('mouseenter', () => {
-            authorBtn.style.opacity = '1';
-        });
-        authorBtn.addEventListener('mouseleave', () => {
-            authorBtn.style.opacity = '0.7';
-        });
 
         controlDiv.appendChild(minusBtn);
         controlDiv.appendChild(speedDisplay);
@@ -1383,5 +1401,5 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         }
     }
 
-    console.log('YouTube Alchemy Lite v1.2.0 loaded');
+    console.log('YouTube Alchemy Lite v1.3.0 loaded');
 })();
