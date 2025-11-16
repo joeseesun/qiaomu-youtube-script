@@ -1,15 +1,16 @@
 # YouTube Alchemy Lite
 
-**简化版YouTube增强脚本 - 从11000行精简到1338行**
+**简化版YouTube增强脚本 - 从11000行精简到1300+行**
 
-原版 [YouTube Alchemy](https://github.com/TimMacy/YouTubeAlchemy) 有200+功能，但太过臃肿。这个Lite版本只保留3个核心功能，删除了90%的代码。
+原版 [YouTube Alchemy](https://github.com/TimMacy/YouTubeAlchemy) 有200+功能，但太过臃肿。这个Lite版本只保留4个核心功能，删除了90%的代码。
+
+**作者：** [向阳乔木](https://www.qiaomu.ai/) | [Twitter @vista8](https://x.com/vista8)
 
 ## 最新版本 v1.1.0 🎉
 
-- ✨ **专业SVG图标** - 替换emoji，跨平台一致显示
-- 💬 **悬浮提示** - 所有按钮都有tooltip说明
-- ⌨️ **快捷键提示** - 鼠标悬停显示键盘快捷键
-- 🎚️ **优化预设速度** - 默认显示5个常用速度（1x/1.25x/1.5x/2x/3x）
+- 📋 **评论导出** - 一键复制所有评论（包括回复）
+- ⬇️ **优化图标** - 改进emoji图标显示效果
+- 👤 **作者信息** - 更新为向阳乔木
 
 ## 为什么做这个简化版？
 
@@ -27,7 +28,7 @@
 3. 数据结构优先，代码简洁
 4. Never break userspace - 向后兼容YouTube
 
-## 保留的3个核心功能
+## 保留的4个核心功能
 
 ### 1️⃣ 转录导出 (Transcript Export)
 
@@ -37,7 +38,7 @@
 - 📥 下载转录文本（带时间戳、章节标题）
 - 📋 复制到剪贴板
 - 💬 一键发送到 ChatGPT
-- 🎧 一键发送到 NotebookLM
+- 📔 一键发送到 NotebookLM
 - 📜 懒加载选项（按需加载转录）
 
 配置项：
@@ -97,6 +98,30 @@ compactLayout: false
 squareDesign: false
 ```
 
+### 4️⃣ 评论导出 (Comment Export)
+
+**为什么保留：** 方便将评论内容导出用于AI分析、内容整理等场景。
+
+功能：
+- 📋 一键复制所有评论
+- 👥 包含评论作者信息
+- 💬 包含所有回复
+- 🔢 自动编号
+- ✓ 复制成功反馈
+
+配置项：
+```javascript
+copyCommentsButton: true       // 显示复制评论按钮
+```
+
+**使用方法：**
+1. 打开任意有评论的视频
+2. 在评论数量旁边会出现 "📋 复制评论" 按钮
+3. 点击按钮即可复制所有可见评论
+4. 格式：`序号. @用户名:\n评论内容\n\n`
+
+**注意：** 只能复制当前已加载的评论，如需复制更多评论，请先向下滚动加载。
+
 ## 删除的功能（原版有，Lite版没有）
 
 ❌ **删除理由：频繁失效 / 过度设计 / 维护成本高**
@@ -147,18 +172,18 @@ squareDesign: false
 **使用步骤：**
 
 1. 打开任意有字幕的YouTube视频页面
-2. 在页面**顶部导航栏右侧**（搜索框旁边）会出现按钮（SVG图标）
+2. 在页面**顶部导航栏右侧**（搜索框旁边）会出现按钮（emoji图标）
 3. 鼠标悬停查看功能说明
 4. 直接点击按钮即可导出：
-   - 📥 (下载图标) = 下载为文本文件
+   - ⬇️ (下载图标) = 下载为文本文件
    - 📋 (复制图标) = 复制到剪贴板
    - 💬 (对话图标) = 复制并打开ChatGPT（附带prompt）
-   - 📖 (书本图标) = 复制并打开NotebookLM
+   - 📔 (书本图标) = 复制并打开NotebookLM
 
 **按钮位置：**
 ```
-YouTube顶部导航栏:  [YouTube Logo] [搜索框] [📥 📋 💬 📖] [通知] [头像]
-                                              ↑ SVG图标，悬停显示tooltip
+YouTube顶部导航栏:  [YouTube Logo] [搜索框] [⬇️ 📋 💬 📔] [通知] [头像]
+                                              ↑ emoji图标，悬停显示tooltip
 ```
 
 **工作原理：**
@@ -372,14 +397,18 @@ function toggleTheaterMode() { /* 切换模式 */ }
 
 AGPL-3.0-or-later（与原版相同）
 
-原作者：Tim Macy
-简化版：基于原版提取核心功能
+**作者：** 向阳乔木
+**网站：** https://www.qiaomu.ai/
+**Twitter：** https://x.com/vista8
+
+**基于：** YouTube Alchemy by Tim Macy
+**简化版：** 提取并优化核心功能
 
 ## 常见问题
 
 ### Q: 为什么不直接用原版？
 
-A: 如果你需要200+功能，用原版。如果你只要这3个核心功能，Lite版更快、更稳定、更少bug。
+A: 如果你需要200+功能，用原版。如果你只要这4个核心功能，Lite版更快、更稳定、更少bug。
 
 ### Q: 能加回某个被删除的功能吗？
 
@@ -405,9 +434,12 @@ A: 比原版快10倍。1100行代码 vs 11000行，内存占用和初始化时�
 
 ## 致谢
 
-- 原版作者：[Tim Macy](https://github.com/TimMacy)
-- 原项目：[YouTubeAlchemy](https://github.com/TimMacy/YouTubeAlchemy)
+- **Lite版作者：** 向阳乔木 ([网站](https://www.qiaomu.ai/) / [Twitter](https://x.com/vista8))
+- **原版作者：** [Tim Macy](https://github.com/TimMacy)
+- **原项目：** [YouTubeAlchemy](https://github.com/TimMacy/YouTubeAlchemy)
 
 ---
 
 **"好品味"意味着知道什么该删除。** - Linus Torvalds
+
+**"Talk is cheap. Show me the code."** - Linus Torvalds
