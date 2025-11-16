@@ -1,31 +1,31 @@
 // ==UserScript==
-// @name         Qiaomu's YouTube Script
-// @description  Essential YouTube enhancements by 向阳乔木: transcript export, playback speed control, tab view layout, and comment export.
-// @author       向阳乔木 (https://x.com/vista8)
+// @name         YouTube Alchemy Lite
+// @description  Simplified YouTube enhancement: transcript export, playback speed control, and tab view layout. Stripped down from 200+ features to just the essentials.
+// @author       Simplified by Claude (Based on Tim Macy's YouTube Alchemy)
 // @license      AGPL-3.0-or-later
-// @version      1.3.0
-// @namespace    QiaomuYouTubeScript
+// @version      1.0.1
+// @namespace    YouTubeAlchemyLite
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=youtube.com
 // @match        https://*.youtube.com/*
 // @grant        GM.setValue
 // @grant        GM.getValue
 // @run-at       document-start
 // @noframes
-// @homepageURL  https://www.qiaomu.ai/
+// @homepageURL  https://github.com/TimMacy/YouTubeAlchemy
 // ==/UserScript==
 
 /************************************************************************
 *                                                                       *
-*   Qiaomu's YouTube Script                                             *
-*   Author: 向阳乔木 (https://www.qiaomu.ai/)                            *
-*   Twitter: https://x.com/vista8                                       *
-*   Based on: YouTube Alchemy by Tim Macy                               *
+*   YouTube Alchemy Lite - Simplified Fork                             *
+*   Original: Copyright © 2025 Tim Macy                                 *
+*   This version: Stripped to 3 core features only                     *
 *                                                                       *
-*   Core features:                                                      *
+*   Kept features:                                                     *
 *   1. Transcript Export (NotebookLM/ChatGPT/Download/Copy)            *
 *   2. Playback Speed Control (0.25x-17x, keyboard shortcuts)          *
 *   3. Tab View Layout (Theater mode + tabs for comments/chapters)     *
-*   4. Comment Export (Copy all comments)                              *
+*                                                                       *
+*   Removed: 180+ other features (UI hiding, color coding, etc.)       *
 *                                                                       *
 ************************************************************************/
 
@@ -101,9 +101,6 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         autoTheaterMode: false,
         maxVidSize: false,
         expandVideoDescription: false,
-
-        // Comment Export
-        copyCommentsButton: true,
 
         // Basic Styling
         compactLayout: false,
@@ -268,87 +265,36 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         .CentAnni-playback-control {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 10px 12px;
+            gap: 8px;
+            padding: 8px;
             background-color: rgba(28, 28, 28, .9);
-            border-radius: 6px;
+            border-radius: 4px;
         }
 
         .CentAnni-playback-control button {
-            padding: 5px 13px;
+            padding: 4px 12px;
             cursor: pointer;
             background-color: hsl(0, 0%, 15%);
-            color: rgba(255, 255, 255, 0.95);
+            color: white;
             border: 1px solid hsl(0, 0%, 30%);
-            border-radius: 4px;
+            border-radius: 3px;
             font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: background-color .2s;
         }
 
         .CentAnni-playback-control button:hover {
-            background-color: hsl(0, 0%, 22%);
-            border-color: hsl(0, 0%, 40%);
-            transform: translateY(-1px);
+            background-color: hsl(0, 0%, 25%);
         }
 
         .CentAnni-playback-control button:active {
-            background-color: hsl(0, 0%, 30%);
-            transform: translateY(0);
+            background-color: hsl(0, 0%, 35%);
         }
 
         #CentAnni-speed-display {
-            min-width: 55px;
+            min-width: 50px;
             text-align: center;
-            color: rgba(255, 255, 255, 0.95);
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
-
-        .CentAnni-speed-preset {
-            margin-left: 6px !important;
-            font-size: 13px !important;
-            padding: 5px 11px !important;
-            font-weight: 500 !important;
-            background-color: rgba(255, 255, 255, 0.06) !important;
-            color: rgba(255, 255, 255, 0.75) !important;
-            border: 1px solid rgba(255, 255, 255, 0.12) !important;
-            border-radius: 4px !important;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        }
-
-        .CentAnni-speed-preset:hover {
-            background-color: rgba(59, 130, 246, 0.15) !important;
-            color: rgba(255, 255, 255, 0.95) !important;
-            border-color: rgba(59, 130, 246, 0.3) !important;
-            transform: translateY(-1px);
-        }
-
-        .CentAnni-speed-preset:active {
-            background-color: rgba(59, 130, 246, 0.25) !important;
-            transform: translateY(0);
-        }
-
-        .CentAnni-author-link {
-            margin-left: 10px !important;
-            padding: 5px 10px !important;
-            background-color: rgba(255, 255, 255, 0.04) !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 4px !important;
-            color: rgba(255, 255, 255, 0.5) !important;
-            font-size: 15px !important;
-            text-decoration: none !important;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
-
-        .CentAnni-author-link:hover {
-            background-color: rgba(255, 255, 255, 0.1) !important;
-            border-color: rgba(255, 255, 255, 0.2) !important;
-            color: rgba(255, 255, 255, 0.9) !important;
-            transform: translateY(-1px);
+            color: white;
+            font-weight: 500;
         }
 
         #CentAnni-speed-buttons {
@@ -939,38 +885,9 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
             setSpeed(video.playbackRate + 0.25);
         });
 
-        // Quick speed presets: 1.5x and 2x
-        const speed15Btn = document.createElement('button');
-        speed15Btn.textContent = '1.5x';
-        speed15Btn.classList.add('CentAnni-speed-preset');
-        speed15Btn.title = 'Set speed to 1.5x';
-        speed15Btn.addEventListener('click', () => {
-            setSpeed(1.5);
-        });
-
-        const speed2Btn = document.createElement('button');
-        speed2Btn.textContent = '2x';
-        speed2Btn.classList.add('CentAnni-speed-preset');
-        speed2Btn.title = 'Set speed to 2x';
-        speed2Btn.addEventListener('click', () => {
-            setSpeed(2);
-        });
-
-        // Author link button
-        const authorBtn = document.createElement('a');
-        authorBtn.textContent = '👤';
-        authorBtn.href = 'https://x.com/vista8';
-        authorBtn.target = '_blank';
-        authorBtn.rel = 'noopener noreferrer';
-        authorBtn.classList.add('CentAnni-author-link');
-        authorBtn.title = 'Follow @vista8 on X';
-
         controlDiv.appendChild(minusBtn);
         controlDiv.appendChild(speedDisplay);
         controlDiv.appendChild(plusBtn);
-        controlDiv.appendChild(speed15Btn);
-        controlDiv.appendChild(speed2Btn);
-        controlDiv.appendChild(authorBtn);
         menuRenderer.prepend(controlDiv);
 
         // Create preset speed buttons (if enabled)
@@ -1235,116 +1152,6 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         }, { once: true });
     }
 
-    // ==================== COPY COMMENTS ====================
-
-    async function createCopyCommentsButton() {
-        if (!USER_CONFIG.copyCommentsButton) return;
-
-        // Wait for comments section to load
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        const commentsSection = document.querySelector('ytd-comments#comments');
-        if (!commentsSection) return;
-
-        const commentsHeader = commentsSection.querySelector('#title');
-        if (!commentsHeader) return;
-
-        // Check if button already exists
-        if (document.getElementById('copy-comments-button')) return;
-
-        // Create copy button
-        const copyBtn = document.createElement('button');
-        copyBtn.id = 'copy-comments-button';
-        copyBtn.textContent = '📋 复制评论';
-        copyBtn.title = 'Copy all comments to clipboard';
-        copyBtn.style.cssText = `
-            margin-left: 12px;
-            padding: 6px 12px;
-            background: transparent;
-            border: 1px solid var(--yt-spec-outline);
-            border-radius: 18px;
-            color: var(--yt-spec-text-secondary);
-            font-size: 14px;
-            cursor: pointer;
-            font-family: "Roboto", "Arial", sans-serif;
-            font-weight: 500;
-            transition: all 0.2s;
-        `;
-
-        copyBtn.addEventListener('mouseenter', () => {
-            copyBtn.style.background = 'var(--yt-spec-badge-chip-background)';
-        });
-
-        copyBtn.addEventListener('mouseleave', () => {
-            copyBtn.style.background = 'transparent';
-        });
-
-        copyBtn.addEventListener('click', async () => {
-            try {
-                // Get all comment threads
-                const commentThreads = commentsSection.querySelectorAll('ytd-comment-thread-renderer');
-
-                if (commentThreads.length === 0) {
-                    alert('No comments found');
-                    return;
-                }
-
-                let allComments = [];
-                let commentCount = 0;
-
-                // Extract comments
-                commentThreads.forEach((thread, index) => {
-                    // Main comment
-                    const mainComment = thread.querySelector('#body #main #comment-content #content-text');
-                    const authorElement = thread.querySelector('#body #main #header-author h3 a');
-
-                    if (mainComment && authorElement) {
-                        const author = authorElement.textContent.trim();
-                        const text = mainComment.textContent.trim();
-                        commentCount++;
-                        allComments.push(`${commentCount}. @${author}:\n${text}\n`);
-                    }
-
-                    // Replies (if any)
-                    const replies = thread.querySelectorAll('#replies ytd-comment-renderer');
-                    replies.forEach(reply => {
-                        const replyContent = reply.querySelector('#comment-content #content-text');
-                        const replyAuthor = reply.querySelector('#header-author h3 a');
-
-                        if (replyContent && replyAuthor) {
-                            const author = replyAuthor.textContent.trim();
-                            const text = replyContent.textContent.trim();
-                            commentCount++;
-                            allComments.push(`${commentCount}. @${author} (回复):\n${text}\n`);
-                        }
-                    });
-                });
-
-                const commentsText = allComments.join('\n');
-
-                // Copy to clipboard
-                await navigator.clipboard.writeText(commentsText);
-
-                // Visual feedback
-                const originalText = copyBtn.textContent;
-                copyBtn.textContent = '✓ 已复制 ' + commentCount + ' 条评论';
-                copyBtn.style.color = 'var(--yt-spec-call-to-action)';
-
-                setTimeout(() => {
-                    copyBtn.textContent = originalText;
-                    copyBtn.style.color = 'var(--yt-spec-text-secondary)';
-                }, 2000);
-
-            } catch (error) {
-                console.error('Failed to copy comments:', error);
-                alert('Failed to copy comments: ' + error.message);
-            }
-        });
-
-        // Insert button next to comment count
-        commentsHeader.appendChild(copyBtn);
-    }
-
     function toggleTheaterMode() {
         const event = new KeyboardEvent('keydown', {
             key: 't',
@@ -1364,7 +1171,6 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
             await createTranscriptButtons();
             await createPlaybackSpeedController();
             await createTabView();
-            await createCopyCommentsButton();
 
             // Auto theater mode
             if (USER_CONFIG.autoTheaterMode) {
@@ -1401,5 +1207,5 @@ A 100+ word summary **bolding** key phrases that capture the core message.`,
         }
     }
 
-    console.log('Qiaomu\'s YouTube Script v1.3.0 loaded');
+    console.log('YouTube Alchemy Lite v1.0.1 loaded');
 })();
